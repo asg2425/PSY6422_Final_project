@@ -1,2 +1,2 @@
 # PSY6422_Final_project
-This is the final project for clas PSY6422
+This is the final project for PSY6422 class
