@@ -11,14 +11,267 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ## Research Question
+What is the current condition of forest in Indonesia and how has it change over the years?
+
+This question arises as the current news showed the plans from the government to remove parts of the forest in Indonesia to establish palm oil plantations on the land of the indigenous people who lived from the resources in the forests. This was phenomenal news as the indigenous people from Papua came to the capital city of Indonesia to protest and show opposition to the government plan...
+
 
 ## Data
+The Global Forest Watch provided data on Indonesia's deforestation rate based on the tree cover loss and carbon data per year from 2001-2023. The data can be imported from this link https://www.globalforestwatch.org/dashboards/country/IDN/?category=land-cover&location=WyJjb3VudHJ5IiwiSUROIl0%3D&map=eyJjYW5Cb3VuZCI6dHJ1ZX0%3D 
+
+(explain how the data is prepared by Global Forest Watch)
 
 ## Data Preparation
+
+```{r}
+## install packages for data preparation ##
+install.packages("readxl")
+install.packages("writexl")
+install.packages("reshape2")
+install.packages("dplyr")
+
+#load the package & set directory
+library(readxl)
+library(here)
+
+#import data from excel
+country_tc_loss_wide <- read_excel("IDN.xlsx", sheet = "Country tree cover loss")
+View(country_tree_cover_loss)
+
+subnational_tc_loss_wide <- read_excel("IDN.xlsx", sheet = "Subnational 1 tree cover loss")
+View(subnational_tree_cover_loss)
+
+country_carbon_data_wide <- read_excel("IDN.xlsx", sheet = "Country carbon data")
+View(country_carbon_data)
+
+subnational_carbon_data_wide <- read_excel("IDN.xlsx", sheet = "Subnational 1 carbon data")
+View(subnational_carbon_data)
+
+#to check the data
+summary(country_tc_loss_wide)
+str(country_tc_loss_wide)
+
+#because this is a wide format data, I will convert it to long data format
+library(reshape2)
+
+country_tc_loss_long <- melt(country_tc_loss_wide, 
+                             id.vars = c('country', 'threshold', 'area_ha', 
+                                         'extent_2000_ha', 'extent_2010_ha', 
+                                         'gain_2000-2020_ha'), 
+                             measure.vars=c('tc_loss_ha_2001','tc_loss_ha_2002', 
+                                            'tc_loss_ha_2003', 'tc_loss_ha_2004', 
+                                            'tc_loss_ha_2005', 'tc_loss_ha_2006',
+                                            'tc_loss_ha_2007', 'tc_loss_ha_2008', 
+                                            'tc_loss_ha_2009', 'tc_loss_ha_2010', 
+                                            'tc_loss_ha_2011', 'tc_loss_ha_2012',
+                                            'tc_loss_ha_2013', 'tc_loss_ha_2014', 
+                                            'tc_loss_ha_2015', 'tc_loss_ha_2016', 
+                                            'tc_loss_ha_2017', 'tc_loss_ha_2018', 
+                                            'tc_loss_ha_2019', 'tc_loss_ha_2020', 
+                                            'tc_loss_ha_2021', 'tc_loss_ha_2022', 
+                                            'tc_loss_ha_2023'),
+                             variable.name = 'year_tc_loss',
+                             value.name = 'tc_loss')
+
+#I use levels() function to change the column "year" into just numbers.
+levels(country_tc_loss_long$year_tc_loss)
+levels(country_tc_loss_long$year_tc_loss) <- c("2001", "2002", "2003", "2004", 
+                                               "2005", "2006", "2007", "2008", 
+                                               "2009", "2010", "2011", "2012", 
+                                               "2013", "2014", "2015", "2016", 
+                                               "2017", "2018", "2019", "2020", 
+                                               "2021", "2022", "2023")
+levels(country_tc_loss_long$year_tc_loss) #to check the new modified years
+
+#now to transform subnational data!
+subnational_tc_loss_long <- melt(subnational_tc_loss_wide, 
+                             id.vars = c('country', 'subnational1', 'threshold',
+                                          'area_ha','extent_2000_ha', 'extent_2010_ha', 
+                                          'gain_2000-2020_ha'), 
+                             measure.vars=c('tc_loss_ha_2001','tc_loss_ha_2002', 
+                                            'tc_loss_ha_2003', 'tc_loss_ha_2004', 
+                                            'tc_loss_ha_2005', 'tc_loss_ha_2006',
+                                            'tc_loss_ha_2007', 'tc_loss_ha_2008', 
+                                            'tc_loss_ha_2009', 'tc_loss_ha_2010', 
+                                            'tc_loss_ha_2011', 'tc_loss_ha_2012',
+                                            'tc_loss_ha_2013', 'tc_loss_ha_2014', 
+                                            'tc_loss_ha_2015', 'tc_loss_ha_2016', 
+                                            'tc_loss_ha_2017', 'tc_loss_ha_2018', 
+                                            'tc_loss_ha_2019', 'tc_loss_ha_2020', 
+                                            'tc_loss_ha_2021', 'tc_loss_ha_2022', 
+                                            'tc_loss_ha_2023'),
+                             variable.name = 'year_tc_loss',
+                             value.name = 'tc_loss')
+
+levels(subnational_tc_loss_long$year_tc_loss)
+levels(subnational_tc_loss_long$year_tc_loss) <- c("2001", "2002", "2003", "2004", 
+                                                   "2005", "2006", "2007", "2008", 
+                                                   "2009", "2010", "2011", "2012", 
+                                                   "2013", "2014", "2015", "2016", 
+                                                   "2017", "2018", "2019", "2020", 
+                                                   "2021", "2022", "2023")
+
+levels(subnational_tc_loss_long$year_tc_loss) #to check the new modified years
+
+# GFW use 30% canopy cover threshold as a default for analysis, so I will
+# filter the data to include just the 30% threshold for the subnational data
+library(dplyr)
+filtered_subnational_tc_loss <- subnational_tc_loss_long%>%filter(threshold == 30)
+View(filtered_subnational_tc_loss)
+
+```
+
 
 ## Visualisation
 
 ### Question statement
+
+
+```{r}
+
+## install packages for data visualisation (plot) ##
+install.packages("ggplot2")
+install.packages("RColorBrewer")
+
+#plotting the country data first using ggplot
+library(ggplot2)
+
+#load RColorBrewer to allow color customisation
+library(RColorBrewer)
+
+#choose the colors fo the scatterplot
+selected_green <- ylgn_colors[4:9] 
+
+#make the canvas
+country_tcloss_plot <- ggplot(data = country_tc_loss_long, mapping = 
+                                aes(x = year_tc_loss, y = tc_loss, 
+                                    color = threshold))
+country_tcloss_plot + 
+  geom_point() + 
+  labs(x = "Year", y = "Tree Cover Loss",
+       title = "Tree Cover Loss in Indonesia (2001-2023)",
+       subtitle = "Data points are based on canopy cover thresholds",
+       caption = "Source: Global Forest Watch.") +
+  theme_minimal() +
+  scale_color_continuous(name = "Canopy cover threshold (%)", low = selected_green[1], 
+                         high = selected_green[length(selected_green)], 
+                         breaks = c(0, 25, 50, 75), 
+                         labels = c("0%", "25%", "50%", "75%")) + 
+  scale_y_continuous(labels = scales::comma) +
+   (theme(plot.title = element_text(family = "Futura", size = 16, face = "bold"),
+         plot.subtitle = element_text(family = "Futura", size = 12),
+         axis.title = element_text(family = "Futura", size = 12),
+         axis.text = element_text(family = "Futura", size = 10), 
+         plot.caption = element_text(family = "Futura", size = 10),
+         legend.title = element_text(family = "Futura", size = 10),
+         legend.text = element_text(family = "Futura", size = 9))) 
+
+ggsave(filename = "figures/country_tc_loss_figure1.jpg")
+
+```
+
+```{r}
+
+subnational_tcloss_plot <- ggplot(data = filtered_subnational_tc_loss, mapping =
+                                    aes(x = year_tc_loss, y = tc_loss, group = 
+                                          subnational1, color = subnational1))
+
+subnational_tcloss_plot + geom_line() + geom_point() +
+  labs(x = "Year", y = "Tree Cover Loss",
+       title = "Tree Cover Loss Indonesia by Province (2001-2023)",
+       subtitle = "Data points are based on canopy cover threshold of 30%",
+       caption = "Source: Global Forest Watch.", color = NULL) +
+  theme_minimal() + scale_y_continuous(labels = scales::comma) +
+  (theme(plot.title = element_text(family = "Futura", size = 16, face = "bold"),
+         plot.subtitle = element_text(family = "Futura", size = 12),
+         axis.title = element_text(family = "Futura", size = 12),
+         axis.text = element_text(family = "Futura", size = 8), 
+         plot.caption = element_text(family = "Futura", size = 10),
+         legend.title = element_text(family = "Futura", size = 10),
+         legend.text = element_text(family = "Futura", size = 8)))
+
+ggsave(filename = "figures/subnational_tc_loss_figure1.jpg")
+
+
+## install to make interactive plot ##
+install.packages("plotly")
+library(plotly)
+
+subnational_tcloss_plot <- ggplot(data = filtered_subnational_tc_loss, mapping =
+         aes(x = year_tc_loss, y = tc_loss, group = 
+               subnational1, color = subnational1, text = paste0("Year: ", year_tc_loss,
+              "<br>Tree Cover Loss: ", tc_loss, 
+              "<br>Region: ", subnational1)))  
+
+p <- subnational_tcloss_plot + geom_line() + geom_point() +
+  labs(x = "Year", y = "Tree Cover Loss",
+       title = "Tree Cover Loss Indonesia by Province (2001-2023)",
+       subtitle = "Data points are based on canopy cover threshold of 30%",
+       caption = "Source: Global Forest Watch.", color = NULL) +
+  theme_minimal() + scale_y_continuous(labels = scales::comma) +
+  (theme(plot.title = element_text(family = "Futura", size = 16, face = "bold"),
+         plot.subtitle = element_text(family = "Futura", size = 12),
+         axis.title = element_text(family = "Futura", size = 12),
+         axis.text = element_text(family = "Futura", size = 8), 
+         plot.caption = element_text(family = "Futura", size = 10),
+         legend.title = element_text(family = "Futura", size = 10),
+         legend.text = element_text(family = "Futura", size = 8)))
+
+interactive_plot <- ggplotly(p, tooltip = "text")
+interactive_plot
+
+#to save
+
+library(htmlwidgets)
+saveWidget(interactive_plot, "subnational_tcloss_plot.html")
+
+```
+
+```{r}
+
+#Java 
+java_tcloss <- subset(filtered_subnational_tc_loss, subnational1 %in% 
+                        c("Banten","Jakarta Raya", "Jawa Barat", "Jawa Tengah",
+                          "Jawa Timur", "Yogyakarta"))
+java_tcloss_plot <- ggplot(data = java_tcloss, mapping =
+                             aes(x = year_tc_loss, y = tc_loss, group = 
+                                   subnational1, color = subnational1)) + 
+  geom_line() + geom_point() +
+  labs(x = "Year", y = "Tree Cover Loss",
+       title = "Tree Cover Loss in Java, Indonesia (2001-2023)",
+       subtitle = "Data points are based on canopy cover threshold of 30%",
+       caption = "Source: Global Forest Watch.", color = NULL) +
+  theme_minimal() + scale_y_continuous(labels = scales::comma) +
+  (theme(plot.title = element_text(family = "Futura", size = 16, face = "bold"),
+         plot.subtitle = element_text(family = "Futura", size = 12),
+         axis.title = element_text(family = "Futura", size = 12),
+         axis.text = element_text(family = "Futura", size = 10), 
+         plot.caption = element_text(family = "Futura", size = 10),
+         legend.title = element_text(family = "Futura", size = 10),
+         legend.text = element_text(family = "Futura", size = 9))) 
+
+java_tcloss_plot
+
+ggsave(filename = "figures/java_tc_loss_figure1.jpg")
+
+## install to animate plot ##
+
+install.packages("gganimate")
+install.packages("gifski")
+library(gganimate)
+library(gifski)
+
+animate_java <- java_tcloss_plot + geom_point() + 
+  transition_manual(year_tc_loss, cumulative=TRUE)
+
+anim <- animate(animate_java, nframes = 50, fps = 10)
+anim
+
+dir.create("gif")
+anim_save("gif/java_tcloss.gif", animation = anim)
+
+```
+
 
 ## Conclusions
 
