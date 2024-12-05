@@ -54,10 +54,3 @@ rsconnect/
 # Ignore all RData files
 *.RData  
 
-# Ignore all HTML files
-*.html   
-
-# Ignore temporary files created by R
-.Rhistory
-.RData
-.Rproj.user/
