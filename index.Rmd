@@ -25,6 +25,8 @@ The Global Forest Watch provided data on Indonesia's deforestation rate based on
 
 ```{r}
 ## install packages for data preparation ##
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
 install.packages("readxl")
 install.packages("writexl")
 install.packages("reshape2")
@@ -36,20 +38,12 @@ library(here)
 
 #import data from excel
 country_tc_loss_wide <- read_excel("IDN.xlsx", sheet = "Country tree cover loss")
-View(country_tree_cover_loss)
 
 subnational_tc_loss_wide <- read_excel("IDN.xlsx", sheet = "Subnational 1 tree cover loss")
-View(subnational_tree_cover_loss)
 
 country_carbon_data_wide <- read_excel("IDN.xlsx", sheet = "Country carbon data")
-View(country_carbon_data)
 
 subnational_carbon_data_wide <- read_excel("IDN.xlsx", sheet = "Subnational 1 carbon data")
-View(subnational_carbon_data)
-
-#to check the data
-summary(country_tc_loss_wide)
-str(country_tc_loss_wide)
 
 #because this is a wide format data, I will convert it to long data format
 library(reshape2)
@@ -81,9 +75,8 @@ levels(country_tc_loss_long$year_tc_loss) <- c("2001", "2002", "2003", "2004",
                                                "2013", "2014", "2015", "2016", 
                                                "2017", "2018", "2019", "2020", 
                                                "2021", "2022", "2023")
-levels(country_tc_loss_long$year_tc_loss) #to check the new modified years
 
-#now to transform subnational data!
+#now to transform the subnational data!
 subnational_tc_loss_long <- melt(subnational_tc_loss_wide, 
                              id.vars = c('country', 'subnational1', 'threshold',
                                           'area_ha','extent_2000_ha', 'extent_2010_ha', 
@@ -111,13 +104,10 @@ levels(subnational_tc_loss_long$year_tc_loss) <- c("2001", "2002", "2003", "2004
                                                    "2017", "2018", "2019", "2020", 
                                                    "2021", "2022", "2023")
 
-levels(subnational_tc_loss_long$year_tc_loss) #to check the new modified years
-
 # GFW use 30% canopy cover threshold as a default for analysis, so I will
 # filter the data to include just the 30% threshold for the subnational data
 library(dplyr)
 filtered_subnational_tc_loss <- subnational_tc_loss_long%>%filter(threshold == 30)
-View(filtered_subnational_tc_loss)
 
 ```
 
@@ -127,7 +117,7 @@ View(filtered_subnational_tc_loss)
 ### Question statement
 
 
-```{r}
+```{r, fig.width=12, fig.height=8}
 
 ## install packages for data visualisation (plot) ##
 install.packages("ggplot2")
@@ -140,6 +130,7 @@ library(ggplot2)
 library(RColorBrewer)
 
 #choose the colors fo the scatterplot
+ylgn_colors <- brewer.pal(9, "YlGn")
 selected_green <- ylgn_colors[4:9] 
 
 #make the canvas
@@ -166,11 +157,9 @@ country_tcloss_plot +
          legend.title = element_text(family = "Futura", size = 10),
          legend.text = element_text(family = "Futura", size = 9))) 
 
-ggsave(filename = "figures/country_tc_loss_figure1.jpg")
-
 ```
 
-```{r}
+```{r, fig.width=12, fig.height=8}
 
 subnational_tcloss_plot <- ggplot(data = filtered_subnational_tc_loss, mapping =
                                     aes(x = year_tc_loss, y = tc_loss, group = 
@@ -189,8 +178,6 @@ subnational_tcloss_plot + geom_line() + geom_point() +
          plot.caption = element_text(family = "Futura", size = 10),
          legend.title = element_text(family = "Futura", size = 10),
          legend.text = element_text(family = "Futura", size = 8)))
-
-ggsave(filename = "figures/subnational_tc_loss_figure1.jpg")
 
 
 ## install to make interactive plot ##
@@ -220,14 +207,9 @@ p <- subnational_tcloss_plot + geom_line() + geom_point() +
 interactive_plot <- ggplotly(p, tooltip = "text")
 interactive_plot
 
-#to save
-
-library(htmlwidgets)
-saveWidget(interactive_plot, "subnational_tcloss_plot.html")
-
 ```
 
-```{r}
+```{r, fig.width=12, fig.height=8}
 
 #Java 
 java_tcloss <- subset(filtered_subnational_tc_loss, subnational1 %in% 
@@ -249,10 +231,6 @@ java_tcloss_plot <- ggplot(data = java_tcloss, mapping =
          plot.caption = element_text(family = "Futura", size = 10),
          legend.title = element_text(family = "Futura", size = 10),
          legend.text = element_text(family = "Futura", size = 9))) 
-
-java_tcloss_plot
-
-ggsave(filename = "figures/java_tc_loss_figure1.jpg")
 
 ## install to animate plot ##
 
